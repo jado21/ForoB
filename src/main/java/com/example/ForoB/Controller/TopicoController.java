@@ -1,8 +1,12 @@
 package com.example.ForoB.Controller;
 
+import com.example.ForoB.DTO.DetalleTopicoDTO;
+import com.example.ForoB.DTO.ListadoTopicoDTO;
 import com.example.ForoB.DTO.TopicoDTO;
 import com.example.ForoB.Model.Topico;
 import com.example.ForoB.Service.TopicoService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,22 +21,51 @@ public class TopicoController {
         this.service=service;
     }
 
-    @PostMapping("/registrar")
-    public void registraTopico(@RequestBody TopicoDTO top){
-
-        System.out.println(top);
-        service.guardarTopico(top);
-
-        System.out.println("Se guardaron los datos");
+    @PostMapping
+    public ResponseEntity<String> registraTopico(@RequestBody @Valid TopicoDTO top){
+        try {
+            service.guardarTopico(top);
+            return ResponseEntity.ok("Tópico registrado con éxito.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/topicos")
-    public List<TopicoDTO> mostrarTopicos(){
+    public List<ListadoTopicoDTO> mostrarTopicos(){
         return service.mostrarTopicos();
     }
 
     @GetMapping("/topicos/{id}")
-    public Optional<Topico> consultarTopico(@PathVariable Long id){
-        return service.consultarTopico(id);
+    public ResponseEntity<DetalleTopicoDTO> consultarTopico(@PathVariable Long id){
+        try {
+            var datosTopico = service.consultarTopico(id);
+            return ResponseEntity.ok(datosTopico);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
+
+    @PutMapping("/{id}") // Acepta solicitudes PUT en /topicos/{id}
+    public ResponseEntity<DetalleTopicoDTO> actualizarTopico(@PathVariable Long id, @RequestBody @Valid TopicoDTO datos) {
+        try {
+            var topicoActualizado = service.actualizarTopico(id, datos);
+            return ResponseEntity.ok(topicoActualizado);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}") // Acepta DELETE en /topicos/{id}
+    public ResponseEntity<?> eliminarTopico(@PathVariable Long id) {
+        try {
+            service.eliminarTopico(id);
+            return ResponseEntity.noContent().build();
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }
